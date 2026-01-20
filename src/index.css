@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-teal-50 via-orange-50 to-rose-50 dark:bg-none dark:bg-pantry-bg-dark min-h-screen text-gray-800 dark:text-pantry-text-primary antialiased selection:bg-teal-200 selection:text-teal-900 transition-colors duration-500;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
