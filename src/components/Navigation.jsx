@@ -10,11 +10,11 @@ export default function Navigation({ activeTab, onTabChange }) {
   ];
 
   return (
-    <nav className="fixed bottom-6 left-4 right-4 h-20 bg-white/70 dark:bg-pantry-bg-secondary/90 backdrop-blur-3xl rounded-[32px] shadow-2xl border border-white/50 dark:border-white/5 flex justify-between items-center px-2 z-40 transform transition-all duration-300 hover:scale-[1.01]">
+    <nav className="fixed bottom-6 left-4 right-4 h-20 bg-white/70 dark:bg-pantry-bg-secondary/90 backdrop-blur-3xl rounded-[32px] shadow-2xl border border-white/50 dark:border-white/5 flex justify-between items-center px-2 z-40 transform transition-all duration-300 hover:scale-[1.01] md:hidden">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
-        
+
         return (
           <button
             key={tab.id}
@@ -28,11 +28,11 @@ export default function Navigation({ activeTab, onTabChange }) {
             {isActive && (
               <span className="absolute inset-x-2 inset-y-2 bg-white dark:bg-pantry-accent-blue/15 rounded-2xl shadow-md dark:shadow-none -z-10 animate-fade-in-up" />
             )}
-            
-            <Icon 
-              size={26} 
-              strokeWidth={isActive ? 2.5 : 2} 
-              className={clsx("mb-0.5 transition-transform duration-300", isActive && "scale-110")} 
+
+            <Icon
+              size={26}
+              strokeWidth={isActive ? 2.5 : 2}
+              className={clsx("mb-0.5 transition-transform duration-300", isActive && "scale-110")}
             />
             {/* <span className={clsx("text-[10px] font-bold tracking-wide transition-opacity", isActive ? "opacity-100" : "opacity-0")}>
               {tab.label}

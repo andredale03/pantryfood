@@ -52,8 +52,8 @@ export default function ExpiringModal({ products, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[60] animate-fade-in-up p-4">
-      <GlassCard intensity="high" className="w-full max-w-lg max-h-[85vh] overflow-y-auto p-0 bg-white dark:bg-gray-900 rounded-3xl border border-white/20">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end md:items-center justify-center z-[60] animate-fade-in-up p-4">
+      <GlassCard intensity="high" className="w-full max-w-lg max-h-[85vh] overflow-y-auto p-0 bg-white dark:bg-gray-900 rounded-3xl md:rounded-[32px] border border-white/20">
 
         {/* Header */}
         <div className="p-5 border-b border-gray-100 dark:border-white/10 flex justify-between items-center sticky top-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur z-10">

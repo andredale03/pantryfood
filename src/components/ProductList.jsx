@@ -16,6 +16,7 @@ const CATEGORIES = {
 
 export default function ProductList({ products, onUpdate }) {
   const [filter, setFilter] = useState('Tutti');
+  const [expiringFilter, setExpiringFilter] = useState(false); // Filtro per prodotti in scadenza
   const [confirmDelete, setConfirmDelete] = useState(null); // ID prodotto
   const [showShopPrompt, setShowShopPrompt] = useState(null); // Oggetto prodotto
 
@@ -27,12 +28,12 @@ export default function ProductList({ products, onUpdate }) {
   const handleStatusUpdate = async (id, status) => {
     const product = products.find(p => p.id === id);
     if (product) {
-       await import('../services/storage').then(mod => mod.finalizeProduct(product, status));
-       // We don't save showShopPrompt here because the product is gone, 
-       // but we captured 'product' variable above so we can still prompt.
-       setConfirmDelete(null);
-       setShowShopPrompt(product);
-       onUpdate(); // Reload list (item will disappear)
+      await import('../services/storage').then(mod => mod.finalizeProduct(product, status));
+      // We don't save showShopPrompt here because the product is gone, 
+      // but we captured 'product' variable above so we can still prompt.
+      setConfirmDelete(null);
+      setShowShopPrompt(product);
+      onUpdate(); // Reload list (item will disappear)
     }
   };
 
@@ -46,11 +47,19 @@ export default function ProductList({ products, onUpdate }) {
   // Filter Logic
   const activeProducts = products.filter(p => !p.status || p.status === 'active');
   const filteredProducts = activeProducts.filter(p => {
-    if (filter === 'Tutti') return true;
-    return p.category === filter;
+    // Category filter
+    if (filter !== 'Tutti' && p.category !== filter) return false;
+
+    // Expiring filter (products expiring in < 3 days)
+    if (expiringFilter) {
+      const days = differenceInDays(parseISO(p.expiryDate), new Date());
+      return days < 3;
+    }
+
+    return true;
   });
 
-  const sortedProducts = [...filteredProducts].sort((a, b) => 
+  const sortedProducts = [...filteredProducts].sort((a, b) =>
     new Date(a.expiryDate) - new Date(b.expiryDate)
   );
 
@@ -58,7 +67,7 @@ export default function ProductList({ products, onUpdate }) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-400">
         <div className="w-20 h-20 bg-white/30 backdrop-blur-xl rounded-[32px] flex items-center justify-center mb-4 shadow-lg border border-white/40">
-           <span className="text-4xl">🍃</span>
+          <span className="text-4xl">🍃</span>
         </div>
         <p className="text-lg font-medium">La dispensa è vuota.</p>
         <p className="text-sm opacity-70 mt-1">Premi + per iniziare</p>
@@ -70,25 +79,25 @@ export default function ProductList({ products, onUpdate }) {
     <>
       {/* iOS-style Filter Chips */}
       <div className="flex gap-3 overflow-x-auto pb-6 -mx-5 pl-8 pr-5 no-scrollbar snap-x">
-        <button 
+        <button
           onClick={() => setFilter('Tutti')}
           className={clsx(
             "px-6 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-300 snap-start border",
-            filter === 'Tutti' 
-              ? "bg-gray-900 text-white border-transparent dark:bg-white dark:text-gray-900 shadow-md" 
+            filter === 'Tutti'
+              ? "bg-gray-900 text-white border-transparent dark:bg-white dark:text-gray-900 shadow-md"
               : "bg-white/40 text-gray-600 border-white/40 dark:bg-pantry-bg-secondary dark:text-white hover:bg-white/60 dark:hover:bg-white/10"
           )}
         >
           Tutti
         </button>
         {Object.entries(CATEGORIES).map(([key, icon]) => (
-          <button 
+          <button
             key={key}
             onClick={() => setFilter(key)}
             className={clsx(
               "px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-300 snap-start border",
-              filter === key 
-                ? "bg-gray-900 text-white border-transparent dark:bg-white dark:text-gray-900 shadow-md" 
+              filter === key
+                ? "bg-gray-900 text-white border-transparent dark:bg-white dark:text-gray-900 shadow-md"
                 : "bg-white/40 text-gray-600 border-white/40 dark:bg-pantry-bg-secondary dark:text-white hover:bg-white/60 dark:hover:bg-white/10"
             )}
           >
@@ -97,19 +106,35 @@ export default function ProductList({ products, onUpdate }) {
         ))}
       </div>
 
-      <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 pb-24 auto-rows-fr">
+      {/* Additional Filter Row: Expiring Soon */}
+      <div className="flex gap-3 pb-6 -mx-5 pl-8 pr-5">
+        <button
+          onClick={() => setExpiringFilter(!expiringFilter)}
+          className={clsx(
+            "px-6 py-3 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-300 border flex items-center gap-2",
+            expiringFilter
+              ? "bg-red-500 text-white border-transparent shadow-lg shadow-red-500/30"
+              : "bg-white/40 text-gray-600 border-white/40 dark:bg-pantry-bg-secondary dark:text-white dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/10"
+          )}
+        >
+          <AlertCircle size={18} />
+          <span>{expiringFilter ? '🔴 Filtro Attivo: In Scadenza' : 'Mostra Solo In Scadenza (<3 giorni)'}</span>
+        </button>
+      </div>
+
+      <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4 lg:gap-6 pb-24 auto-rows-fr">
         {sortedProducts.map(product => {
           const days = differenceInDays(parseISO(product.expiryDate), new Date());
           let itemStatusIcon = null;
-          
+
           // Uniform Card Style (Monocolore)
-          let statusStyle = ""; 
+          let statusStyle = "";
           let textColor = "text-gray-900 dark:text-pantry-text-primary";
-          
+
           // Logic Colori Date: Red (<3), Yellow (3-5), Green (>5)
           let badgeStyle = "bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400";
           itemStatusIcon = null; // Nessuna icona per green
-          
+
           if (days < 3) {
             // < 3 Giorni o Scaduto: ROSSO
             badgeStyle = "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400";
@@ -121,36 +146,32 @@ export default function ProductList({ products, onUpdate }) {
           }
 
           return (
-            <GlassCard 
-              key={product.id} 
-              className={clsx("p-4 sm:p-5 md:p-6 lg:p-8 transition-all flex flex-col justify-center h-full", statusStyle)}
+            <GlassCard
+              key={product.id}
+              className={clsx("p-5 sm:p-6 transition-all flex flex-col h-full group min-h-[160px] justify-between", statusStyle)}
             >
-              <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
+              <div className="flex items-start justify-between gap-4 mb-4">
                 {/* Icona */}
-                <div className="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-white/60 shadow-sm flex items-center justify-center text-2xl md:text-4xl">
+                <div className="flex-shrink-0 w-16 h-16 rounded-3xl bg-white/60 dark:bg-white/5 flex items-center justify-center text-4xl">
                   {CATEGORIES[product.category || 'Dispensa'] || '🥫'}
                 </div>
-                
-                {/* Contenuto Destro: Header (Nome+Btn) e Badge sotto */}
-                <div className="flex-1 min-w-0 flex flex-col justify-center min-h-[48px]">
-                  <div className="flex items-center justify-between gap-2">
-                     <h3 className={clsx("font-bold text-lg md:text-xl lg:text-2xl leading-tight truncate pr-1", textColor)}>{product.name}</h3>
-                     <button 
-                        onClick={() => handleInitialDelete(product.id)}
-                        className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all active:scale-90 -mr-1"
-                      >
-                        <Trash2 size={18} className="md:w-6 md:h-6" strokeWidth={2.5} />
-                      </button>
-                  </div>
-                  
-                  <div className={clsx("self-start inline-flex items-center gap-1.5 px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg text-xs md:text-sm font-bold mt-1 md:mt-2", badgeStyle)}>
-                   {itemStatusIcon}
-                    <span>
-                      {days < 0 ? 'Scaduto il ' : 'Scade il '} 
-                      {format(parseISO(product.expiryDate), 'd MMM yyyy', { locale: it }).toUpperCase()}
-                    </span>
-                    {days >= 0 && days <= 7 && <span className="opacity-80">({days}g)</span>}
-                  </div>
+
+                {/* Delete Button (Top Right) - More Visible */}
+                <button
+                  onClick={() => handleInitialDelete(product.id)}
+                  className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-white/50 dark:bg-white/5 hover:bg-red-500 text-gray-400 dark:text-gray-500 hover:text-white rounded-xl transition-all active:scale-95"
+                >
+                  <Trash2 size={20} className="md:w-6 md:h-6" strokeWidth={2.5} />
+                </button>
+              </div>
+
+              <div className="flex-1 flex flex-col justify-end">
+                <h3 className={clsx("font-bold text-xl md:text-2xl leading-tight truncate mb-2", textColor)} title={product.name}>{product.name}</h3>
+                <div className={clsx("self-start inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm md:text-base font-bold", badgeStyle)}>
+                  {itemStatusIcon}
+                  <span>
+                    {days < 0 ? 'Scaduto' : 'Scade'}: {format(parseISO(product.expiryDate), 'd MMM', { locale: it })}
+                  </span>
                 </div>
               </div>
             </GlassCard>
@@ -179,7 +200,7 @@ export default function ProductList({ products, onUpdate }) {
                 <span className="font-bold">Buttato</span>
               </button>
             </div>
-            <button 
+            <button
               onClick={() => setConfirmDelete(null)}
               className="mt-8 text-gray-400 text-sm font-medium hover:text-gray-600"
             >
@@ -200,7 +221,7 @@ export default function ProductList({ products, onUpdate }) {
             <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
               Vuoi aggiungere <span className="font-bold text-gray-900 dark:text-white">{showShopPrompt.name}</span> alla lista della spesa?
             </p>
-            
+
             <div className="flex gap-4">
               <button
                 onClick={() => handleAddToShoppingList(false)}
