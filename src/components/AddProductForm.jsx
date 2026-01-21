@@ -146,7 +146,7 @@ export default function AddProductForm({ onAdd, onClose, embedded = false }) {
           onChange={(e) => setExpiryDate(e.target.value)}
           min="2024-01-01"
           max="2030-12-31"
-          className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 dark:bg-black dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none transition-all font-medium text-lg text-gray-900 dark:text-white [color-scheme:light] dark:[color-scheme:dark]"
+          className="w-full max-w-full box-border px-4 py-3.5 bg-gray-50 border border-gray-200 dark:bg-black dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none transition-all font-medium text-lg text-gray-900 dark:text-white [color-scheme:light] dark:[color-scheme:dark]"
           style={{ textAlign: 'left' }}
         />
       </div>
