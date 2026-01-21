@@ -68,7 +68,7 @@ export default function AddItemModal({ onAdd, onClose }) {
             )}
 
             {mode === 'scan' && (
-              <ScanReceipt onClose={onClose} />
+              <ScanReceipt onClose={onClose} onAdd={onAdd} />
             )}
           </div>
         </GlassCard>

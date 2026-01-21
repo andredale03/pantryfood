@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import ReceiptUploader from './ReceiptUploader';
 import ReceiptPreview from './ReceiptPreview';
-import { supabaseApi } from '../../services/supabase';
+
 import { Loader2 } from 'lucide-react';
 
-export default function ScanReceipt({ onClose }) {
+export default function ScanReceipt({ onClose, onAdd }) {
   const [step, setStep] = useState('upload');
   const [parsedData, setParsedData] = useState(null);
   const [error, setError] = useState(null);
@@ -49,19 +49,14 @@ export default function ScanReceipt({ onClose }) {
     setStep('saving');
 
     try {
-      const productsToAdd = confirmedData.items.map(item => ({
-        name: item.name,
-        quantity: item.qty,
-        price: item.price,
-        expiry_date: item.expiry_estimate || confirmedData.date,
-        category: 'Dispensa',
-        status: 'active',
-        pantry_id: 'default'
-      }));
-
-      for (const p of productsToAdd) {
-        const { error } = await supabaseApi.addProduct(p);
-        if (error) throw error;
+      for (const item of confirmedData.items) {
+        await onAdd({
+          name: item.name,
+          quantity: item.qty,
+          price: item.price,
+          expiryDate: item.expiry_estimate || confirmedData.date,
+          category: 'Dispensa'
+        });
       }
 
       alert('Prodotti salvati su Supabase!');
